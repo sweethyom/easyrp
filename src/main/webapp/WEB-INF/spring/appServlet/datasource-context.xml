@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dataSource-context 설정 (spring/appServlet에 위치) -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<!-- 사용 할 DB설정 파일 path 지정해주기 -->
+	<context:property-placeholder
+		location="classpath:config/dataSource.properties" />
+
+	<!-- 의존 주입(properties 파일의 설정을 DB mapper에 입력) -->
+	<bean class="org.apache.commons.dbcp2.BasicDataSource"
+		id="dataSource" destroy-method="close">
+		<property name="driverClassName" value="${driver}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${user}" />
+		<property name="password" value="${password}" />
+	</bean>
+
+	<!-- mybatis model 연결 설정 -->
+	<bean class="org.mybatis.spring.SqlSessionFactoryBean"
+		id="sqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation"
+			value="classpath:config/mybatis-config.xml" />
+		<!-- classpath*는 루트(java에서 찾는다) -->
+		<property name="mapperLocations"
+			value="classpath*:co/second/easyrp/**/map/*.xml" />
+	</bean>
+
+	<!-- 설정한 모든 mybatis mapper를 의존성으로 연결하여 commit 하는 느낌 -->
+	<bean class="org.mybatis.spring.SqlSessionTemplate"
+		id="sqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactoryBean" />
+	</bean>
+
+	<mybatis-spring:scan
+		base-package="co.second.easyrp" />
+</beans>

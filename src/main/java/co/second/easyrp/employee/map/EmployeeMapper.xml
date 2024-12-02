@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.employee.map.EmployeeMapper">
+
+	<!-- 사원 관리를 구현하기 위한 Employee서비스 SQL Mapper -->
+	<!-- (2024년 4월 29일 오전 11시 27분 박현우) -->
+
+	<!-- 사원 전체 목록(정보)을 가져오기위한 쿼리 -->
+	<!-- (2024년 4월 29일 오전 11시 29분 박현우) -->
+	<!--이 부분은 모든 VO객체에 값을 담을꺼라 * 사용했습니다. -->
+	<select id="employeeAllList">
+		SELECT *
+		FROM employee
+		WHERE deleteyn = 'N'
+	</select>
+
+	<!-- 사원을 등록하기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오전 11시 7분 하서현) -->
+	<insert id="employeeRegis">
+		INSERT INTO employee(
+		cod,
+		name,
+		password,
+		department_cod,
+		emp_position,
+		regdate,
+		email,
+		tel,
+		birthdate,
+		gender
+		) VALUES(
+		(SELECT e.cod FROM (
+		<include refid="newEmpCod"></include>
+		) e),
+		#{name},
+		#{password},
+		#{departmentCod},
+		#{empPosition},
+		#{regdate},
+		#{email},
+		#{tel},
+		#{birthdate},
+		#{gender}
+		);
+	</insert>
+
+	<!-- 사원을 등록할때 고유한 사원번호를 부여해주기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오전 11시 7분 하서현) -->
+	<sql id="newEmpCod">
+		SELECT (CASE
+		WHEN cod IS NULL
+		THEN 'emp001'
+		ELSE CONCAT(
+		'emp',
+		LPAD(
+		(MAX(
+		CAST(
+		SUBSTRING(cod,4)
+		AS
+		UNSIGNED
+		)
+		)+1
+		),
+		3,0))
+		END) as cod
+		FROM employee
+	</sql>
+
+	<!-- 부서정보를 join한 사원정보를 가져오기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오전 11시 7분 하서현) -->
+	<sql id="empListJoinedDept">
+		SELECT
+		e.cod,
+		e.name,
+		e.gender,
+		e.birthdate,
+		e.tel,
+		e.email,
+		d.cod as dept_cod,
+		d.name as dept_name,
+		e.emp_position,
+		d.wrkname,
+		d.location,
+		e.regdate,
+		e.quitdate,
+		e.quit_reason,
+		e.password,
+		e.deleteyn
+		FROM employee
+		e
+		JOIN department d ON e.department_cod = d.cod
+		WHERE
+		e.deleteyn = 'N'
+	</sql>
+	<select id="empListJoinedDept">
+		SELECT
+		e.cod,
+		e.name,
+		e.gender,
+		e.birthdate,
+		e.tel,
+		e.email,
+		d.cod as dept_cod,
+		d.name as dept_name,
+		e.emp_position,
+		d.wrkname,
+		d.location,
+		e.regdate,
+		e.quitdate,
+		e.quit_reason,
+		e.password,
+		e.deleteyn
+		FROM employee e
+		JOIN department d ON e.department_cod = d.cod
+		WHERE e.deleteyn = 'N'
+	</select>
+
+
+	<!-- 로그인 기능을 위한 쿼리 -->
+	<!-- (2024년 4월 29일 오후 8시 42분 수정 박현우) -->
+	<!-- 이 부분은 모든 VO객체에 값을 담을꺼라 * 사용했습니다. -->
+	<select id="loginResult">
+		SELECT *
+		FROM employee
+		WHERE cod=#{cod} AND
+		password=#{password}
+		AND deleteyn = 'N'
+      	AND quitdate IS NULL
+	</select>
+
+	<!-- 사원의 정보를 업데이트 하기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오전 11시 7분 하서현) -->
+	<update id="updateEmployee">
+		UPDATE employee
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="name != null">name = #{name},</if>
+			<if test="password != null">password = #{password},</if>
+			<if test="departmentCod != null">department_cod = #{departmentCod},</if>
+			<if test="empPosition != null">emp_position = #{empPosition},</if>
+			<if test="regdate != null">regdate = #{regdate},</if>
+			<if test="email != null">email = #{email},</if>
+			<if test="tel != null">tel = #{tel},</if>
+			<if test="birthdate != null">birthdate = #{birthdate},</if>
+			<if test="gender != null">gender = #{gender},</if>
+			<if test="quitdate != null">quitdate = #{quitdate},</if>
+			<if test="quitReason != null">quit_reason = #{quitReason},</if>
+			<if test="deleteyn != null">deleteyn = #{deleteyn}</if>
+		</trim>
+		WHERE cod = #{cod};
+	</update>
+	<update id="delQuitdate">
+		UPDATE employee
+			SET quitdate = #{quitdate}
+		WHERE cod = #{cod};
+	</update>
+
+	<!-- 페이징된 사원리스트를 구하기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오후 3시 43분 하서현) -->
+	<select id="empListPaged">
+		SELECT *
+		FROM (
+		<include refid="empListJoinedDept" />
+		) as e
+		WHERE e.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchDeptCod != null and searchDeptCod != ''">
+			AND dept_cod LIKE CONCAT('%', #{searchDeptCod}, '%')
+		</if>
+		<if test="searchDeptName != null and searchDeptName != ''">
+			AND dept_name LIKE CONCAT('%', #{searchDeptName}, '%')
+		</if>
+		<if test="searchEmpPosition != null and searchEmpPosition != ''">
+			AND emp_position LIKE CONCAT('%', #{searchEmpPosition},
+			'%')
+		</if>
+		ORDER BY e.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+	<!-- 필터링된 사원리스트의 총갯수를 구하기위한 쿼리 -->
+	<!-- (2024년 5월 3일 오후 3시 43분 하서현) -->
+	<select id="countempList" resultType="int">
+		SELECT COUNT(*)
+		FROM (
+		<include refid="empListJoinedDept" />
+		) as e
+		WHERE e.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchDeptCod != null and searchDeptCod != ''">
+			AND dept_cod LIKE CONCAT('%', #{searchDeptCod}, '%')
+		</if>
+		<if test="searchDeptName != null and searchDeptName != ''">
+			AND dept_name LIKE CONCAT('%', #{searchDeptName}, '%')
+		</if>
+		<if test="searchEmpPosition != null and searchEmpPosition != ''">
+			AND emp_position LIKE CONCAT('%', #{searchEmpPosition},
+			'%')
+		</if>
+	</select>
+
+	<!-- 사원한명의 정보를 가져오는 쿼리 -->
+	<!-- (2024년 5월 3일 오전 10시 23분 하서현) -->
+	<select id="selectOneEmp">
+		SELECT * FROM employee
+			WHERE cod = #{cod}
+	</select>
+</mapper>

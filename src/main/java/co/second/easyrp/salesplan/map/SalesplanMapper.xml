@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.salesplan.map.SalesplanMapper">
+	<select id="SalesplanSelectList">
+		SELECT *
+		FROM salesplan
+		WHERE DELETEYN = 'N'
+		<if test="cod != null and cod != ''">
+			AND cod = #{cod}
+		</if>
+		<if test="clientCod != null and clientCod != ''">
+			AND client_cod LIKE CONCAT('%', #{clientCod}, '%')
+		</if>
+		<if test="productCod != null and productCod != ''">
+			AND product_cod LIKE CONCAT('%', #{productCod}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="countSalesTables" resultType="int">
+		SELECT COUNT(*)
+		FROM salesplan
+		WHERE DELETEYN = 'N'
+		<if test="cod != null and cod != ''">
+			AND cod = #{cod}
+		</if>
+		<if test="clientCod != null and clientCod != ''">
+			AND client_cod LIKE CONCAT('%', #{clientCod}, '%')
+		</if>
+		<if test="productCod != null and productCod != ''">
+			AND product_cod LIKE CONCAT('%', #{productCod}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+	
+	<select id="ClientNameSelectList">
+		select name from client
+	</select>
+	
+	<select id="ProductNameSelectList">
+		select prodname from product
+	</select>
+	
+	<insert id="SalesplanInsert" parameterType="co.second.easyrp.salesplan.service.SalesplanVO">
+	
+		insert into salesplan (cod, client_cod, product_cod, basicpln_qty)
+		select 
+		    concat('spln', lpad(coalesce(max(substring(cod, 5)), 0) + 1, 3, '0')),
+			#{clientCod}, 
+			#{productCod}, 
+			#{basicplnQty}
+		FROM salesplan;
+		
+	</insert>
+	
+	<select id="ClientCodSelect" parameterType="String" resultType="String">
+		select cod from client
+		where name = #{ClientName}
+	</select>
+	
+	<select id="ProductCodSelect" parameterType="String" resultType="String">
+		select cod from product
+		where prodname = #{ProductName}
+	</select>
+	
+	<update id="SalesplanUpdate" parameterType="co.second.easyrp.salesplan.service.SalesplanVO">
+		update salesplan
+		set basicpln_qty = #{modplnQty}
+		where cod = #{cod}
+	</update>
+	
+	<select id="SalesplanNameSelect" parameterType="String">
+		SELECT sp.cod, c.name, pr.prodname
+		FROM salesplan sp
+		JOIN client c ON sp.client_cod = c.cod
+		JOIN product pr ON sp.product_cod = pr.cod
+		where sp.cod = #{cod}
+	</select>
+	
+	<update id="SalesplanDelete" parameterType="co.second.easyrp.salesplan.service.SalesplanVO">
+		update salesplan
+		set deleteyn = 'Y'
+		where cod = #{cod}
+	</update>
+	
+	
+</mapper>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.commontable.map.CommonTableMapper">
+
+	<select id="commonTableAllListPaged">
+		SELECT *
+		FROM commontable
+		WHERE DELETEYN = 'N'
+		<if test="searchNumber != null and searchNumber != ''">
+			AND post_id = #{postId};
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+			AND title LIKE CONCAT('%', #{title}, '%')
+		</if>
+		<if test="searchContent != null and searchContent != ''">
+			AND content LIKE CONCAT('%', #{content}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND created_at BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY post_id DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+
+	<select id="countCommonTables" resultType="int">
+		SELECT COUNT(*)
+		FROM commontable
+		WHERE DELETEYN = 'N'
+		<if test="searchNumber != null and searchNumber != ''">
+			AND post_id = #{searchNumber}
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+			AND title LIKE CONCAT('%', #{searchTitle}, '%')
+		</if>
+		<if test="searchContent != null and searchContent != ''">
+			AND content LIKE CONCAT('%', #{searchContent}, '%')
+		</if>
+		<if test="searchAuthor != null and searchAuthor != ''">
+			AND author LIKE CONCAT('%', #{searchAuthor}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND created_at BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+
+	<select id="getAllKeyValues">
+	  SELECT id, cod, value
+	  FROM common_modal_kv
+	</select>
+	
+	<select id="getAllCopyDatas">
+	  SELECT title, content, author
+	  FROM commontable_copy
+	</select>
+
+	<insert id="commonInsert">
+		INSERT INTO commontable (
+		TITLE,
+		CONTENT,
+		AUTHOR,
+		MODAL_INPUT)
+		VALUES(
+		#{title},
+		#{content},
+		#{author},
+		#{modalInput}
+		);
+	</insert>
+
+	<select id="getCommonData">
+		SELECT title, content, author, modal_input
+		FROM
+		commontable
+		WHERE post_id = #{postId};
+	</select>
+
+	<update id="commonUpdate">
+		UPDATE commontable
+		SET
+		TITLE = #{title}
+		CONTENT =
+		#{content},
+		AUTHOR = #{author},
+		MODAL_INPUT = #{modalInput},
+		WHERE POST_ID = #{postId};
+	</update>
+
+	<update id="commonDelete">
+		UPDATE commontable
+		SET
+		DELETEYN = 'Y'
+		WHERE POST_ID = #{postId};
+	</update>
+
+
+</mapper>

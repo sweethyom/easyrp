@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.chart.map.ChartMapper">
+
+	<select id="ProductSelectList">
+		select cod as productCod, prodname
+		from product
+	</select>
+	
+	<select id="getOrderByProductAndYear">
+	SELECT
+		o.product_cod as productCod,
+		YEAR(o2.order_date) AS year,
+		MONTH(o2.order_date) AS month,
+		SUM(o.qty) AS totalQty
+	FROM
+	orderdetail o 
+	JOIN orders o2 ON o.cod = o2.cod
+	where o.product_cod = #{productCod} and YEAR(o2.order_date) = #{year}
+	GROUP BY
+		o.product_cod,
+		YEAR(o2.order_date),
+		MONTH(o2.order_date)
+	ORDER BY
+		o.product_cod, year, month
+	</select>
+	
+	<select id="getSalesPlanByProductAndYear">
+	SELECT 
+		s.product_cod as productCod,
+		year(s.plan_date) as year,
+		month(s.plan_date) as month,
+		sum(s.basicpln_qty) as totalQty
+	from
+		salesplan s 
+	where s.product_cod = #{productCod} and YEAR(s.plan_date) = #{year}
+	group by
+		s.product_cod,
+		YEAR(s.plan_date),
+		month(s.plan_date)
+	order by
+		s.product_cod, year, month;
+	</select>
+	
+	<select id="getTop3Product">
+	WITH monthly_sales AS (
+			SELECT
+				o.order_date,
+				YEAR(o.order_date) AS order_year,
+				MONTH(o.order_date) AS order_month,
+				od.product_cod,
+				p.prodname as prodname,
+				SUM(od.total) AS product_sales
+			FROM orders o
+			JOIN orderdetail od ON o.cod = od.cod
+			join product p on od.product_cod = p.cod
+			WHERE MONTH(o.order_date) = #{month} and YEAR(o.order_date) = #{donut_year}
+			GROUP BY o.order_date, od.product_cod
+		),
+	total_sales AS (
+		SELECT
+			order_year,
+			order_month,
+		SUM(product_sales) AS total_sales
+		FROM monthly_sales
+		GROUP BY order_year, order_month
+		),
+	ranked_sales AS (
+		SELECT
+			order_year,
+			order_month,
+			product_cod,
+			prodname,
+			product_sales,
+			total_sales,
+		RANK() OVER (ORDER BY product_sales DESC) AS sales_rank
+		FROM monthly_sales
+		JOIN total_sales USING (order_year, order_month)
+		),
+	top3_sales AS (
+	SELECT
+		order_year,
+		order_month,
+		product_cod,
+		prodname,
+		product_sales,
+		product_sales / total_sales * 100 AS sales_percentage
+		FROM ranked_sales
+		WHERE sales_rank <![CDATA[<=]]> 3
+		),
+	other_sales AS (
+		SELECT
+		order_year,
+		order_month,
+		'Other' AS product_cod,
+		'Other' as prodname,
+		SUM(product_sales) AS product_sales,
+		SUM(product_sales) / MAX(total_sales) * 100 AS sales_percentage
+		FROM ranked_sales
+		WHERE sales_rank <![CDATA[>]]> 3
+		GROUP BY order_year, order_month
+		)
+	SELECT
+		order_year,
+		order_month,
+		product_cod,
+		prodname,
+		product_sales,
+		sales_percentage
+	FROM top3_sales
+	UNION ALL
+	SELECT
+		order_year,
+		order_month,
+		product_cod,
+		prodname,
+		product_sales,
+		sales_percentage
+	FROM other_sales;
+		
+	</select>
+	
+</mapper>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.inventorymgmt.map.InventoryMgmtMapper">
+
+	<!-- (2024년 5월 12일 오후 7시 16분 박현우) -->
+
+	<!-- 완료 -->
+	<select id="tableAllList"
+		parameterType="co.second.easyrp.inventorymgmt.service.SearchVO"
+		resultType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		SELECT i.cod, i.name, p2.name as
+		'productGroupName', w.name as
+		'warehouseName', i.cur_inv_qty,
+		u.name AS 'unitName',
+		um.name AS
+		'mgmtUnitName'
+		FROM inventory i
+		LEFT JOIN warehouse w ON
+		i.warehouse_cod
+		=
+		w.cod
+		LEFT JOIN productgroup p2 ON i.productgroup_cod = p2.cod
+		LEFT
+		JOIN unit u ON i.unit_cod = u.cod
+		LEFT JOIN unit um ON i.mgmt_unit_cod
+		= um.cod
+		WHERE
+		i.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND i.cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND i.name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if
+			test="searchWarehouseName != null and searchWarehouseName != ''">
+			AND w.name LIKE CONCAT('%', #{searchWarehouseName}, '%')
+		</if>
+		<if
+			test="searchProductGroupName != null and searchProductGroupName != ''">
+			AND p2.name LIKE CONCAT('%', #{searchProductGroupName}, '%')
+		</if>
+		<if test="searchEmployeeCod != null and searchEmployeeCod != ''">
+			AND i.employee_cod LIKE CONCAT('%', #{searchEmployeeCod},
+			'%')
+		</if>
+		ORDER BY i.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+	<!-- 완료 -->
+	<select id="getData"
+		resultType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		SELECT
+		p.*,
+		p2.name as 'productGroupName',
+		w.name as
+		'warehouseName',
+		u.name AS 'unitName',
+		um.name AS 'mgmtUnitName'
+		FROM
+		inventory p
+		LEFT JOIN warehouse w ON p.warehouse_cod = w.cod
+		LEFT JOIN
+		productgroup p2 ON p.productgroup_cod = p2.cod
+		LEFT JOIN unit u ON
+		p.unit_cod = u.cod
+		LEFT JOIN unit um ON p.mgmt_unit_cod = um.cod
+		WHERE
+		p.cod = #{cod}
+	</select>
+
+	<!-- 완료 -->
+	<select id="countTable"
+		parameterType="co.second.easyrp.inventorymgmt.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM inventory p
+		LEFT JOIN warehouse w ON
+		p.warehouse_cod
+		= w.cod
+		LEFT JOIN productgroup p2 ON p.productgroup_cod
+		= p2.cod
+		WHERE
+		p.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND p.cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND p.name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if
+			test="searchWarehouseName != null and searchWarehouseName != ''">
+			AND w.name LIKE CONCAT('%', #{searchWarehouseName}, '%')
+		</if>
+		<if
+			test="searchProductGroupName != null and searchProductGroupName != ''">
+			AND p2.name LIKE CONCAT('%', #{searchProductGroupName}, '%')
+		</if>
+		<if test="searchEmployeeCod != null and searchEmployeeCod != ''">
+			AND p.employee_cod LIKE CONCAT('%', #{searchEmployeeCod},
+			'%')
+		</if>
+	</select>
+
+	<!-- 완료 -->
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM inventory;
+	</select>
+
+	<!-- 완료 -->
+	<insert id="insertFn"
+		parameterType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		INSERT INTO inventory (
+		warehouse_cod,
+		employee_cod,
+		inv_date,
+		qty,
+		unitprice,
+		price,
+		cur_inv_qty,
+		cur_inv_price,
+		spec,
+		unit_cod,
+		unit_amount,
+		safety_inv_qty,
+		cod,
+		name,
+		mgmt_unit_cod,
+		mgmt_unit_amount,
+		note,
+		productgroup_cod)
+		VALUES(
+		#{warehouseCod},
+		#{employeeCod},
+		#{invDate},
+		#{qty},
+		#{unitprice},
+		#{price},
+		#{curInvQty},
+		#{curInvPrice},
+		#{spec},
+		#{unitCod},
+		#{unitAmount},
+		#{safetyInvQty},
+		#{cod},
+		#{name},
+		#{mgmtUnitCod},
+		#{mgmtUnitAmount},
+		#{note},
+		#{productGroupCod}
+		);
+	</insert>
+
+	<update id="updateFn"
+		parameterType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		UPDATE inventory
+		SET
+		warehouse_cod = #{warehouseCod},
+		employee_cod = #{employeeCod},
+		inv_date = #{invDate},
+		qty = #{qty},
+		unitprice = #{unitprice},
+		cur_inv_qty = #{curInvQty},
+		cur_inv_price =
+		#{curInvPrice},
+		spec = #{spec},
+		unit_cod = #{unitCod},
+		unit_amount = #{unitAmount},
+		safety_inv_qty =
+		#{safetyInvQty},
+		cod = #{cod},
+		name = #{name},
+		mgmt_unit_cod =
+		#{mgmtUnitCod},
+		mgmt_unit_amount = #{mgmtUnitAmount},
+		note = #{note},
+		productgroup_cod = #{productGroupCod}
+		WHERE cod = #{cod}
+	</update>
+	
+	<!-- 2024.05.21 14:36 손지은 추가 -->
+	<update id="qtyupdateFn"
+		parameterType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		UPDATE inventory
+		SET
+		cur_inv_qty = #{curInvQty},
+		cur_inv_price = #{curInvPrice}
+		WHERE cod = #{cod};
+	</update>
+
+	<!-- 완료 -->
+	<update id="deleteFn"
+		parameterType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		UPDATE inventory
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod};
+	</update>
+
+	<select id="apiTableAllList"
+		resultType="co.second.easyrp.inventorymgmt.service.InventoryMgmtVO">
+		SELECT cod, name, deleteyn, unitprice
+		FROM inventory
+		where deleteyn = 'N' 
+		ORDER BY cod DESC
+	</select>
+
+
+</mapper>

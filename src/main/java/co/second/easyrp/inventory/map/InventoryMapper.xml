@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.inventory.map.InventoryMapper">
+	
+	<select id="inventoryList">
+		SELECT 
+			i.*, 
+			w.name AS 'warehouse', 
+			e.name AS 'employee', 
+			u.name AS 'unit'
+		FROM inventory i
+		LEFT JOIN warehouse w
+		ON i.warehouse_cod = w.cod
+		LEFT JOIN employee e
+		ON i.employee_cod = e.cod
+		LEFT JOIN unit u
+		ON i.unit_cod = u.cod
+		WHERE i.deleteyn = 'N'
+		<if test=" cod!= null and cod != ''">
+			AND i.cod = #{cod}
+		</if>
+		<if test="warehouse != null and warehouse != ''">
+			AND w.name LIKE CONCAT('%', #{warehouse}, '%')
+		</if>
+		<if test="employee != null and employee != ''">
+			AND e.name LIKE CONCAT('%', #{employee}, '%')
+		</if>
+		<if test="account != null and account != ''">
+			AND i.account LIKE CONCAT('%', #{account}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND i.inv_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+		ORDER BY i.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+		
+	</select>
+		<select id="countInventoryLists">
+		SELECT count(*), w.name AS 'warehouse', e.name AS 'employee', u.name AS 'unit'
+		FROM inventory i
+		LEFT JOIN warehouse w
+		ON i.warehouse_cod = w.cod
+		LEFT JOIN employee e
+		ON i.employee_cod = e.cod
+		LEFT JOIN unit u
+		ON i.unit_Cod = u.name
+		WHERE i.deleteyn = 'N'
+		<if test=" cod!= null and cod != ''">
+			AND i.cod = #{cod}
+		</if>
+		<if test="warehouse != null and warehouse != ''">
+			AND w.name LIKE CONCAT('%', #{warehouse}, '%')
+		</if>
+		<if test="employee != null and employee != ''">
+			AND e.name LIKE CONCAT('%', #{employee}, '%')
+		</if>
+		<if test="account != null and account != ''">
+			AND account LIKE CONCAT('%', #{account}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND inv_Date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+	<insert id="insertInventory"></insert>
+	<update id="updateInventory"></update>
+	<delete id="deleteInventory"></delete>
+	
+	<!-- 자재찾기 modal에 뿌려줄 리스트를 가져오기위한 쿼리 -->
+	<!-- 하서현 -->
+	<select id="inventorySearch">
+		SELECT i.*,
+   		    (SELECT u.name FROM unit u WHERE u.cod = i.unit_cod) AS 'unitName',
+			(SELECT u.name FROM unit u WHERE u.cod = i.mgmt_unit_cod) AS 'mgmtUnitName',
+			(SELECT p.name FROM productgroup p WHERE p.cod = i.productgroup_cod) As 'prodgroupName'
+		FROM inventory i
+	</select>
+	
+	<!-- 2024.05.20 14:06 손지은 추가 -->
+	<!-- 인벤토리 가용재고 가져오는 코드 -->
+	<select id="selectInventoryQty">
+		SELECT (cur_inv_qty - safety_inv_qty) AS 'qty'
+		FROM inventory 
+		WHERE cod = #{cod}
+	</select>
+	<!-- 자재의 현재고량을 증가 또는 감소하는 쿼리 -->
+	<!-- 하서현 -->
+	<update id="updateCurInvQtyFromInv">
+		UPDATE inventory SET cur_inv_qty = cur_inv_qty + #{amount} WHERE cod = #{cod};
+	</update>
+</mapper>

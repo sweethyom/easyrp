@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.specification.map.SpecificationMapper">
+
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 START -->
+	<select id="getOrderDatas"
+		parameterType="co.second.easyrp.specification.service.SpecificationVO"
+		resultType="co.second.easyrp.specification.service.SpecificationVO">
+		SELECT o.cod 'orderCod',
+			   c.name AS 'clientName',
+			   c.address AS 'clientAddress',
+			   c.manager_tel AS 'clientTel',
+			   o.order_date AS 'orderDate',
+			   p.prodname AS 'productName',
+			   od.qty AS 'orderQty',
+			   od.product_price AS 'unitPrice',
+			   od.subtotal AS 'supplyPrice',
+			   o.outbound_state AS 'outboundState',
+	   	 	   o.is_specification AS 'isSpecification'
+		FROM orders o
+		JOIN client c ON c.cod = o.client_cod
+		JOIN orderdetail od ON o.cod = od.cod
+		JOIN product p ON od.product_cod = p.cod
+		WHERE o.cod = #{orderCod}
+	</select>
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 END -->
+	
+		<!-- 완료 -->
+	<update id="updateOrderSpecificationState"
+		parameterType="co.second.easyrp.specification.service.SpecificationVO">
+		UPDATE orders
+		SET
+		is_specification = 'Y'
+		WHERE cod = #{orderCod}
+	</update>
+	
+	
+	<select id="getPurchaseDatas"
+		parameterType="co.second.easyrp.specification.service.SpecificationVO"
+		resultType="co.second.easyrp.specification.service.SpecificationVO">
+		SELECT  p.cod AS 'purchaseCod',
+			c.name AS 'clientName',
+			c.address AS 'clientAddress',
+			c.manager_tel AS 'clientTel',
+			p.po_date AS 'purchaseDate',
+			i.name AS 'inventoryName',
+			p2.mgmt_qty AS 'purchaseMgmtQty',
+			p2.inv_qty AS 'purchaseInvQty',
+			p.state_cod AS 'inboundState',
+			p.is_specification AS 'isSpecification',
+			p2.unitprice AS 'unitPrice'
+		FROM purchaseorder p
+		JOIN client c ON c.cod = p.client_cod
+		JOIN purchaseorderdetail p2 ON p.cod = p2.purchaseorder_cod
+		JOIN inventory i ON i.cod = p2.inventory_cod
+		WHERE p.cod = #{purchaseCod}
+	</select>
+	
+	
+	<!-- 완료 -->
+	<update id="updatePurchaseSpecificationState"
+		parameterType="co.second.easyrp.specification.service.SpecificationVO">
+		UPDATE purchaseorder
+		SET is_specification = 'Y'
+		WHERE cod = #{purchaseCod}
+	</update>
+
+</mapper>

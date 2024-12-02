@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.bom.map.BomMapper">
+
+	<!-- (2024년 5월 14일 오전 9시 25분 박현우) -->
+
+	<!-- Product 테이블에서 단일 튜플을 가져오는 쿼리 -->
+	<select id="getHyunwooProductData"
+		resultType="co.second.easyrp.bom.service.BomVO">
+		SELECT p.cod AS 'prodCod',
+		p.prodname AS 'productName',
+		p2.name AS 'productGroupName'
+		FROM product p
+		LEFT JOIN productgroup p2
+		ON p.productgroup_cod = p2.cod
+		WHERE p.is_bominsert = 'N' AND
+		p.deleteyn = 'N'
+	</select>
+
+	<select id="getBomDetailData"
+		resultType="co.second.easyrp.bom.service.BomVO">
+		SELECT b.prod_cod AS 'prodCod', p.prodname AS 'productName', p2.name AS
+		'productGroupName', b.inv_cod AS 'invCod', i.name AS 'invName',
+		b.quantity AS 'quantity',
+		i.unitprice AS 'invUnitprice', p.stdprice AS 'stdprice'
+		FROM bom b
+		LEFT JOIN product p ON b.prod_cod = p.cod
+		LEFT JOIN inventory i ON b.inv_cod = i.cod
+		LEFT JOIN productgroup p2 ON p.productgroup_cod = p2.cod
+		WHERE b.prod_cod = #{prodCod}
+	</select>
+
+	<insert id="insertBom"
+		parameterType="co.second.easyrp.bom.service.BomVO">
+		INSERT INTO bom (
+		prod_cod,
+		inv_cod,
+		quantity)
+		VALUES(
+		#{prodCod},
+		#{invCod},
+		#{quantity}
+		)
+	</insert>
+
+	<update id="insertStdprice"
+		parameterType="co.second.easyrp.bom.service.BomVO">
+		UPDATE product
+		SET
+		stdprice = #{stdprice}
+		WHERE cod = #{prodCod}
+	</update>
+
+	<!-- BOM 개별 삭제 -->
+	<delete id="deleteBom"
+		parameterType="co.second.easyrp.bom.service.BomVO">
+		DELETE FROM bom
+		WHERE prod_cod = #{prodCod}
+	</delete>
+
+
+
+</mapper>

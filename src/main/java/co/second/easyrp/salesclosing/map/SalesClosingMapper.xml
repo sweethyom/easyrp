@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.salesclosing.map.SalesClosingMapper">
+
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 START -->
+	<select id="tableAllList"
+		parameterType="co.second.easyrp.salesclosing.service.SearchVO"
+		resultType="co.second.easyrp.salesclosing.service.SalesClosingVO">
+		SELECT o.cod AS 'orderCod',
+		o2.total AS 'total',
+		o.sales_closing_date AS
+		'salesClosingDate',
+		o.sales_closing_state AS 'salesClosingState'
+		FROM
+		orderdetail o
+		JOIN orders o2 ON o.cod =
+		o2.cod
+		WHERE o.deleteyn = 'N'
+		<if test="searchOrderCod != null and searchOrderCod != ''">
+			AND o.cod = #{searchOrderCod}
+		</if>
+		<if
+			test="searchSalesClosingState != null and searchSalesClosingState != ''">
+			AND o.sales_closing_state = #{searchSalesClosingState}
+		</if>
+		<if
+			test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+			AND o.sales_closing_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+		GROUP BY o.cod
+		HAVING COUNT(*) = COUNT(CASE WHEN o.delivery_state = 102
+		THEN 1 END)
+		ORDER BY o.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 END -->
+
+	<!-- 페이지네이션 페이지 생성을 위해 데이터의 수를 카운트 하기 위한 쿼리 START -->
+	<select id="countTable"
+		parameterType="co.second.easyrp.productmgmt.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM (
+		SELECT o.cod
+		FROM orderdetail o
+		WHERE o.deleteyn =
+		'N'
+		<if test="searchOrderCod != null and searchOrderCod != ''">
+			AND o.cod = #{searchOrderCod}
+		</if>
+		<if
+			test="searchSalesClosingState != null and searchSalesClosingState != ''">
+			AND o.sales_closing_state = #{searchSalesClosingState}
+		</if>
+		<if
+			test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+			AND o.sales_closing_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		GROUP BY o.cod
+		HAVING COUNT(*) = COUNT(CASE WHEN o.delivery_state = 102
+		THEN 1 END)
+		) AS countsubquery
+	</select>
+	<!-- 페이지네이션 페이지 생성을 위해 데이터의 수를 카운트 하기 위한 쿼리 END -->
+
+	<!-- 매출마감 기능을 구현하기 위한 Update 쿼리 START -->
+	<update id="salesClosingUpdate"
+		parameterType="co.second.easyrp.salesclosing.service.SalesClosingVO">
+		UPDATE orderdetail
+		SET sales_closing_state = 'Y', sales_closing_date = CURDATE()
+		WHERE cod = #{orderCod}
+	</update>
+	<!-- 매출마감 기능을 구현하기 위한 Update 쿼리 END -->
+
+</mapper>

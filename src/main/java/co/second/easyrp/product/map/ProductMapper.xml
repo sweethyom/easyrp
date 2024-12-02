@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.product.map.ProductMapper">
+<select id="productList" resultType="co.second.easyrp.product.service.ProductVO">
+		SELECT 
+			p.*, 
+			w.name AS 'warehouse', 
+			e.name AS 'employee', 
+			u.name AS 'unit'
+		FROM product p
+		LEFT JOIN warehouse w
+		ON p.warehouse_cod = w.cod
+		LEFT JOIN employee e
+		ON p.employee_cod = e.cod
+		LEFT JOIN unit u
+		ON p.unit_cod = u.cod
+		WHERE p.deleteyn = 'N'
+		<if test=" cod!= null and cod != ''">
+			AND p.cod = #{cod}
+		</if>
+		<if test="warehouse != null and warehouse != ''">
+			AND w.name LIKE CONCAT('%', #{warehouse}, '%')
+		</if>
+		<if test="employee != null and employee != ''">
+			AND e.name LIKE CONCAT('%', #{employee}, '%')
+		</if>
+		<if test="account != null and account != ''">
+			AND account LIKE CONCAT('%', #{account}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND p.inv_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY p.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+		
+	</select>
+		<select id="countProductLists">
+		SELECT count(*), w.name AS 'warehouse', e.name AS 'employee', u.name AS 'unit'
+		FROM product p
+		LEFT JOIN warehouse w
+		ON p.warehouse_cod = w.cod
+		LEFT JOIN employee e
+		ON p.employee_cod = e.cod
+		LEFT JOIN unit u
+		ON p.unit_Cod = u.name
+		WHERE p.deleteyn = 'N'
+		<if test=" cod!= null and cod != ''">
+			AND p.cod = #{cod}
+		</if>
+		<if test="warehouse != null and warehouse != ''">
+			AND w.name LIKE CONCAT('%', #{warehouse}, '%')
+		</if>
+		<if test="employee != null and employee != ''">
+			AND e.name LIKE CONCAT('%', #{employee}, '%')
+		</if>
+		<if test="account != null and account != ''">
+			AND account LIKE CONCAT('%', #{account}, '%')
+		</if>
+		<!-- <if test="preSearchDate != null and postSearchDate != null">
+			AND inv_Date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if> -->
+	</select>
+	
+	<!-- 제품찾기 modal에 뿌려줄 리스트를 가져오기위한 쿼리 -->
+	<select id="prodSearch">
+		SELECT p.*,
+			(SELECT u.name FROM unit u WHERE u.cod = p.unit_cod) AS 'unitName',
+			(SELECT u.name FROM unit u WHERE u.cod = p.mgmt_unit_cod) AS 'mgmtUnitName',
+			(SELECT p2.name FROM productgroup p2 WHERE p2.cod = p.productgroup_cod) As 'prodgroupName'
+		FROM product p;
+	</select>
+	
+	<!-- 제품의 현재고량을 증가 또는 감소하는 쿼리 -->
+	<!-- 하서현 -->
+	<update id="updateCurInvQtyFromPrd">
+		UPDATE product SET cur_inv_qty = cur_inv_qty + #{amount} WHERE cod = #{cod}
+	</update>
+	
+	</mapper>

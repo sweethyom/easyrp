@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.orderdetail.map.OrderdetailMapper">
+	<!-- 2024.05.14 14:53 손지은 / 셀렉트에 cur_remain_qty 추가 -->
+	<select id="orderdetailSelectListAll">
+		SELECT  od.cod, od.num, o.order_date, c.name as 'clientName', od.product_cod, p.prodname, u.name as 'unitName', od.qty, od.delivery_date, od.note, od.cur_remain_qty, o.dday  
+		FROM orderdetail od 
+		JOIN orders o
+		ON o.cod = od.cod 
+		JOIN client c 
+		ON o.client_cod = c.cod 
+		JOIN product p 
+		ON od.product_cod = p.cod 
+		JOIN unit u 
+		ON p.unit_cod = u.cod 
+		WHERE od.mps_state = 'N'
+		AND od.deleteyn = 'N'
+		AND od.delivery_state = 101
+		OR od.delivery_state = 104
+		ORDER BY o.cod desc
+	</select>
+	<select id="orderdetailSelectList"></select>
+	<insert id="orderdetailInsert"></insert>
+	<update id="orderdetailUpdate"></update>
+	<delete id="orderdetailDelete"></delete>
+	
+	<select id="OrderDetailSelectList">
+		SELECT 
+			od.cod, 
+			od.num,
+			od.product_cod as productCod, 
+			od.qty, 
+			od.product_price as productPrice,
+			od.cur_remain_qty, 
+			od.total, 
+			od.cur_remain_price, 
+			od.delivery_date, 
+			od.delivery_state as deliverState, 
+			od.mps_state, 
+			od.product_price, 
+			od.subtotal, 
+			p.cur_inv_qty-p.saftey_inv_qty as availableQty,
+			d.name as deptName, o.cod as cod, p.prodname, c.name as clientName, e.name as empName 
+		from orderdetail od
+		join orders o on od.cod = o.cod 
+		join product p on od.product_cod = p.cod 
+		join client c on o.client_cod = c.cod 
+		join employee e on o.employee_cod = e.cod 
+		join department d on e.department_cod = d.cod 
+		where od.cod = #{cod}
+	</select>
+</mapper>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.collectedmoney.map.CollectedMoneyMapper">
+
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 START -->
+	<select id="tableAllList"
+		parameterType="co.second.easyrp.collectedmoney.service.SearchVO"
+		resultType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+		SELECT c.*, s.name AS 'stateName'
+		FROM collectedmoney c
+		LEFT JOIN state
+		s ON c.state = s.cod
+		WHERE c.deleteyn = 'N'
+		<if test="searchOrderCod != null and searchOrderCod != ''">
+			AND c.order_cod = #{searchOrderCod}
+		</if>
+		<if
+			test="searchCollectedMoneyState != null and searchCollectedMoneyState != ''">
+			AND c.state = #{searchCollectedMoneyState}
+		</if>
+		<if
+			test="searchCollectedMoneyEmployeeCod != null and searchCollectedMoneyEmployeeCod != ''">
+			AND c.emp_cod = #{searchCollectedMoneyEmployeeCod}
+		</if>
+		<if
+			test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+			AND c.colday BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+		ORDER BY c.order_cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 END -->
+
+	<!-- 테이블의 페이지네이션 개수를 구하기 위한 count 쿼리 START -->
+	<select id="countTable"
+		parameterType="co.second.easyrp.collectedmoney.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM collectedmoney c
+		WHERE c.deleteyn = 'N'
+		<if test="searchOrderCod != null and searchOrderCod != ''">
+			AND c.order_cod = #{searchOrderCod}
+		</if>
+		<if
+			test="searchCollectedMoneyState != 0">
+			AND c.state = #{searchCollectedMoneyState}
+		</if>
+		<if
+			test="searchCollectedMoneyEmployeeCod != null and searchCollectedMoneyEmployeeCod != ''">
+			AND c.emp_cod = #{searchCollectedMoneyEmployeeCod}
+		</if>
+		<if
+			test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+			AND c.colday BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+	</select>
+	<!-- 테이블의 페이지네이션 개수를 구하기 위한 count 쿼리 END -->
+
+	<!-- 수주 정보를 CollectedMoney insert,update 페이지에서 쓰기 위한 쿼리 START -->
+	<select id="getHyunwooOrderData"
+		resultType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+		SELECT o.cod AS 'orderCod', o.total AS 'colsum', o.deleteyn
+		AS 'deleteyn', o.is_collected as 'isCollected'
+		FROM orders o
+		WHERE
+		o.deleteyn = 'N' AND o.is_collected = 'N';
+	</select>
+	<!-- 수주 정보를 CollectedMoney insert,update 페이지에서 쓰기 위한 쿼리 END -->
+	
+	<!-- 수금 정보를 특정 ID만 가져오는 쿼리 START  -->
+	<select id="getData" resultType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+			SELECT order_cod, colsum, unrev, balance
+			FROM collectedmoney
+			WHERE order_cod = #{orderCod};
+	</select>
+	<!-- 수금 정보를 특정 ID만 가져오는 쿼리 END  -->
+
+
+	<!-- 수금관리 등록을 위한 쿼리 START -->
+	<insert id="insertFn"
+		parameterType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+		INSERT INTO collectedmoney (
+		order_cod,
+		colsum,
+		unrev,
+		balance,
+		emp_cod
+		)
+		VALUES(
+		#{orderCod},
+		#{colsum},
+		#{unrev},
+		#{balance},
+		#{empCod}
+		);
+	</insert>
+	<!-- 수금관리 등록을 위한 쿼리 END -->
+	
+	
+
+
+	<!-- 수금관리 수정을 위한 쿼리 START -->
+	<update id="updateFn"
+		parameterType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+		UPDATE collectedmoney
+		SET
+		unrev = #{unrev},
+		balance = #{balance},
+		emp_cod = #{empCod}
+		WHERE order_cod = #{orderCod}
+	</update>
+	<!-- 수금관리 수정을 위한 쿼리 END -->
+	
+	<!-- 수금관리 수정을 위한 쿼리 START -->
+	<delete id="deleteFn"
+		parameterType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+			DELETE FROM collectedmoney
+			WHERE order_cod = #{orderCod}
+	</delete>
+	<!-- 수금관리 수정을 위한 쿼리 END -->
+	
+	<update id="collectedMoneyCompleteFn" parameterType="co.second.easyrp.collectedmoney.service.CollectedMoneyVO">
+		UPDATE collectedmoney
+		SET
+		colday = curdate(),
+		colamount = #{colamount},
+		balance = 0,
+		state = 301
+		WHERE order_cod = #{orderCod}
+	</update>
+
+</mapper>

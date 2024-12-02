@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.mrp.map.MrpMapper">
+	<select id="mrpSelectListAll">
+		SELECT m.cod, m.product_cod, p.prodname, m.inventory_cod, i.name AS 'invname', p.spec, i.spec AS 'invspec', m.take_date, m.po_date, o.dday, m.qty, u.name AS 'unitName', u2.name AS 'invUnitName', m.account  
+		FROM mrp m 
+		JOIN product p 
+		ON m.product_cod = p.cod 
+		LEFT JOIN inventory i 
+		ON m.inventory_cod = i.cod 
+		LEFT JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		LEFT JOIN orders o 
+		ON m2.order_cod = o.cod 
+		LEFT JOIN unit u 
+		ON p.unit_cod = u.cod
+		LEFT JOIN unit u2 
+		ON i.unit_cod = u2.cod 
+		WHERE m.deleteyn = 'N'
+		AND m.closing = 'N'
+		<if test="searchPlan != null and searchPlan != ''">
+			AND m.plan = #{searchPlan}
+		</if>
+		<if test="searchProdCod != null and searchProdCod != ''">
+			AND m.product_cod = #{searchProdCod}
+		</if>
+		<if test="searchProdName != null and searchProdName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchProdName}, '%')
+		</if>
+		<if test="searchClient != null and searchClient != ''">
+			AND c.name LIKE CONCAT('%', #{searchClient}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND m.plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY m.cod desc
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	<select id="countMrpTables">
+		SELECT COUNT(*)
+		FROM mrp m 
+		JOIN product p 
+		ON m.product_cod = p.cod 
+		LEFT JOIN inventory i 
+		ON m.inventory_cod = i.cod 
+		LEFT JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		LEFT JOIN orders o 
+		ON m2.order_cod = o.cod 
+		LEFT JOIN unit u 
+		ON p.unit_cod = u.cod
+		LEFT JOIN unit u2 
+		ON i.unit_cod = u2.cod 
+		WHERE m.deleteyn = 'N'
+		AND m.closing = 'N'
+		<if test="searchPlan != null and searchPlan != ''">
+			AND m.plan = #{searchPlan}
+		</if>
+		<if test="searchProdCod != null and searchProdCod != ''">
+			AND m.product_cod = #{searchProdCod}
+		</if>
+		<if test="searchProdName != null and searchProdName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchProdName}, '%')
+		</if>
+		<if test="searchClient != null and searchClient != ''">
+			AND c.name LIKE CONCAT('%', #{searchClient}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND m.plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+	
+	<select id="mrpSelect">
+		SELECT m.cod, m.product_cod, p.prodname, m.inventory_cod, i.name AS 'invname', p.spec, i.spec AS 'invspec', m.take_date, m.po_date, o.dday, m.qty, u.name AS 'unitName', u2.name AS 'invUnitName', m.account, u3.name AS 'invoiceUnitName', u4.name AS 'invoiceInvUnitNmae', p.unit_amount AS 'amount', i.unit_amount as 'invAmount', p.mgmt_unit_amount as 'invoiceAmount', i.mgmt_unit_amount as 'invoiceUnitAmount', c.name AS 'clientName', p.unitprice 
+		FROM mrp m 
+		JOIN product p 
+		ON m.product_cod = p.cod 
+		LEFT JOIN inventory i 
+		ON m.inventory_cod = i.cod 
+		LEFT JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		LEFT JOIN orders o 
+		ON m2.order_cod = o.cod 
+		LEFT JOIN unit u 
+		ON p.unit_cod = u.cod
+		LEFT JOIN unit u2 
+		ON i.unit_cod = u2.cod 
+		LEFT JOIN unit u3
+		ON p.mgmt_unit_cod = u3.cod 
+		LEFT JOIN unit u4
+		ON i.mgmt_unit_cod = u4.cod
+		LEFT JOIN client c 
+		ON o.client_cod = c.cod 
+		WHERE m.cod = #{cod}
+	</select>
+	
+	<select id="mrpSelectListAllModal">
+		SELECT m.cod, m.product_cod, p.prodname, m.inventory_cod, i.name AS 'invname', p.spec, i.spec AS 'invspec', m.take_date, m.po_date, o.dday, m.qty, u.name AS 'unitName', u2.name AS 'invUnitName', m.account  
+		FROM mrp m 
+		JOIN product p 
+		ON m.product_cod = p.cod 
+		LEFT JOIN inventory i 
+		ON m.inventory_cod = i.cod 
+		LEFT JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		LEFT JOIN orders o 
+		ON m2.order_cod = o.cod 
+		LEFT JOIN unit u 
+		ON p.unit_cod = u.cod
+		LEFT JOIN unit u2 
+		ON i.unit_cod = u2.cod 
+		WHERE m.deleteyn = 'N'
+		AND m.closing = 'N'
+		ORDER BY m.cod desc
+	</select>
+	
+	<select id="selectByMpsCod">
+		SELECT *
+		FROM mrp
+		WHERE mps_cod = #{mpsCod}
+	</select>
+	
+	<insert id="mrpInsert">
+		INSERT INTO mrp (cod, mps_cod, product_cod, inventory_cod, take_date, po_date, qty, employee_cod, account)
+		VALUES (#{cod}, #{mpsCod}, #{productCod}, #{inventoryCod}, #{takeDate}, #{poDate}, #{qty}, #{employeeCod}, #{account})
+	</insert>
+	
+	<update id="mrpUpdate">
+		UPDATE mrp
+		SET
+		po_date = #{poDate}
+		WHERE cod = #{cod}
+	</update>
+	
+	<delete id="mrpDelete">
+		UPDATE mrp
+		SET
+		deleteyn = 'Y'
+		WHERE cod = #{cod}
+	</delete>
+	
+	<update id="mpsClosingUpdateToY">
+		UPDATE mps
+		SET closing = 'Y'
+		WHERE cod = #{mpsCod}
+	</update>
+	
+	<update id="mpsClosingUpdateToN">
+		UPDATE mps
+		SET closing = 'N'
+		WHERE cod = #{mpsCod}
+	</update>
+	
+	<select id="selectMaxCod">
+		SELECT COALESCE(MAX(CAST(RIGHT (cod,3) AS SIGNED)), 0) AS cod FROM mrp
+	</select>
+	
+	<select id="selectBom">
+		SELECT prod_cod AS 'prodCod', inv_cod, inv_cod AS 'inventoryCod', quantity AS 'invQty' 
+		FROM bom
+		WHERE prod_cod = #{productCod}
+	</select>
+</mapper>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.warehouse.map.WareHouseMapper">
+	
+	<select id="warehouseTableAllList" parameterType="co.second.easyrp.warehouse.service.SearchVO" resultType="co.second.easyrp.warehouse.service.WareHouseVO">
+		SELECT cod, name, location
+		FROM warehouse
+		WHERE deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchLocation != null and searchLocation != ''">
+			AND location LIKE CONCAT('%', #{searchLocation}, '%')
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="apiGetWarehouse" resultType="co.second.easyrp.warehouse.service.WareHouseVO">
+		SELECT cod, name, location, deleteyn
+		FROM warehouse
+		WHERE deleteyn = 'N'
+		ORDER BY cod DESC;
+	</select>
+	
+	<select id="getWareHouseData" resultType="co.second.easyrp.warehouse.service.WareHouseVO">
+        SELECT cod, name, location FROM warehouse WHERE cod = #{cod}
+    </select>
+	
+	<select id="countWarehouseTable" parameterType="co.second.easyrp.warehouse.service.SearchVO" resultType="int">
+		SELECT COUNT(*)
+		FROM warehouse
+		WHERE DELETEYN = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchLocation != null and searchLocation != ''">
+			AND location LIKE CONCAT('%', #{searchLocation}, '%')
+		</if>
+	</select>
+	
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM warehouse
+	</select>
+	
+	<insert id="warehouseInsertFn" parameterType="co.second.easyrp.warehouse.service.WareHouseVO">
+		INSERT INTO warehouse (
+		cod,
+		name,
+		location)
+		VALUES(
+		#{cod},
+		#{name},
+		#{location}
+		);
+	</insert>
+	
+	<update id="warehouseUpdateFn" parameterType="co.second.easyrp.warehouse.service.WareHouseVO">
+		UPDATE warehouse
+		SET
+		name = #{name},
+		location = #{location}
+		WHERE cod = #{cod};
+	</update>
+	
+	<update id="warehouseDeleteFn" parameterType="co.second.easyrp.warehouse.service.WareHouseVO">
+		UPDATE warehouse
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod};
+	</update>
+	
+	
+	
+	
+</mapper>

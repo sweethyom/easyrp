@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.estimate.map.EstimateMapper">
+
+	<select id="EstimateSelectList">
+		SELECT e.cod, e.est_date , e.client_cod, e.employee_cod , e2.name as employeeName , e.deleteyn , e.orderyn, e.vax ,e.total , e.subtotal
+		FROM estimate e
+		LEFT JOIN employee e2 on e.employee_cod = e2.cod
+		WHERE e.DELETEYN = 'N'
+		<if test="cod != null and cod != ''">
+			AND e.cod = #{cod}
+		</if>
+		<if test="clientCod != null and clientCod != ''">
+			AND e.client_cod LIKE CONCAT('%', #{clientCod}, '%')
+		</if>
+		<if test="employeeCod != null and employeeCod != ''">
+			AND e.employee_cod LIKE CONCAT('%', #{employeeCod}, '%')
+		</if>
+		<if test="employeeName != null and employeeName != ''">
+			AND e2.name LIKE CONCAT('%', #{employeeName}, '%')
+		</if>
+		<if test="orderyn != null and orderyn != ''">
+			AND e.orderyn LIKE CONCAT('%', #{orderyn}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND e.est_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="countSalesTables" resultType="int">
+		SELECT COUNT(*)
+		FROM estimate
+		WHERE DELETEYN = 'N'
+		<if test="cod != null and cod != ''">
+			AND cod = #{cod}
+		</if>
+		<if test="clientCod != null and clientCod != ''">
+			AND client_cod LIKE CONCAT('%', #{clientCod}, '%')
+		</if>
+		<if test="employeeCod != null and employeeCod != ''">
+			AND employee_cod LIKE CONCAT('%', #{employeeCod}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND est_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+
+	<select id="ClientNameSelectList">
+		SELECT cod AS clientCod, name AS clientName FROM client
+	</select>
+	
+	<insert id="EstimateInsert" parameterType="co.second.easyrp.estimate.service.EstimateVO">
+		
+		<selectKey keyProperty="cod" resultType="java.lang.String" order="BEFORE">
+			select CONCAT('est', LPAD(COALESCE(MAX(SUBSTRING(e.cod, 4)), 0) + 1, 3, '0')) from estimate e
+		</selectKey>
+		
+		INSERT INTO estimate (cod, client_cod, employee_cod)
+		values ( 
+		    #{cod},
+		    (SELECT cod FROM client WHERE name = #{clientName}),
+		    #{employeeCod}
+		)
+		
+	</insert>
+	
+	<insert id="EstimateInsert2">
+		insert into estimatedetail (estimate_cod, num, product_cod, qty)
+		values (
+			#{cod}, 
+			(SELECT ifnull(max(e.num), 0) + 1 as num from estimatedetail e where e.estimate_cod = #{cod}), 
+			(SELECT cod from product p where prodname = #{prodName}),
+			#{qty}
+		)
+	</insert>
+	
+	<update id="EstimateDelete">
+		update estimate
+		set deleteyn = 'Y'
+		where cod = #{cod}
+	</update>
+	
+	<select id="EstimateRecentCodSelect">
+		SELECT cod FROM estimate ORDER BY cod DESC LIMIT 1;
+	</select>
+	
+	<select id="EstimateSelect" parameterType="String">
+
+	SELECT
+	    e.cod,
+	    c.name AS clientName,
+	    emp.name AS empName,
+	    e.client_cod,
+	    e.employee_cod,
+	    e.est_date,
+	    dept.name AS deptName
+	FROM estimate e
+	JOIN client c ON e.client_cod = c.cod
+	JOIN employee emp ON e.employee_cod = emp.cod
+	JOIN department dept ON emp.department_cod = dept.cod
+	WHERE e.cod = #{cod};
+
+		
+	</select>
+	
+	<select id="EstimateDetailSelectList" parameterType="String">
+		SELECT e.estimate_cod as cod , e.num, e2.est_date , p.cod as productcod , p.prodname, e.qty, e.total, c.name as clientname,  e2.employee_cod as employeecod , e3.name as empname, d.name as deptname, p.unitprice
+		FROM estimatedetail e 
+		LEFT JOIN product p ON e.product_cod = p.cod
+		LEFT JOIN estimate e2 ON e.estimate_cod = e2.cod 
+		LEFT JOIN client c ON e2.client_cod = c.cod
+		LEFT JOIN employee e3 ON e2.employee_cod = e3.cod 
+		LEFT JOIN department d ON e3.department_cod = d.cod
+		WHERE estimate_cod = #{cod}
+	</select>
+	
+	<update id="EstimateUpdate" parameterType="map">
+		UPDATE estimatedetail
+		SET qty = #{qty}
+		WHERE estimate_cod = #{cod} and num = #{num}
+	</update>
+	
+	<delete id="EstimateDetailDelete">
+		DELETE FROM estimatedetail 
+		WHERE product_cod = #{productCod} AND estimate_cod = #{cod}
+	</delete>
+	
+	<select id="ProductNameSelectList">
+		SELECT cod, prodname
+		FROM product
+	</select>
+	
+	
+	<insert id="EstimateDetailInsert">
+	
+	<selectKey keyColumn="generatedIndex,generatedProductCod" keyProperty="generatedIndex,generatedProductCod" resultType="map" order="BEFORE">
+	    SELECT 
+	        IFNULL(MAX(ed.num), 0) + 1 AS generatedIndex, 
+	        (
+	            SELECT p.cod 
+	            FROM product p 
+	            WHERE p.prodName = #{prodname}
+	            LIMIT 1
+	        ) AS generatedProductCod
+	    FROM 
+	        estimatedetail ed
+	    WHERE 
+	        ed.estimate_cod = #{cod};
+	</selectKey>
+	
+	    INSERT INTO estimatedetail (estimate_cod, num, product_cod, qty)
+	    VALUES (#{cod}, #{generatedIndex}, #{generatedProductCod}, #{qty});
+	</insert>
+	
+	<select id="EstimateSelectList1">
+		SELECT 
+			e.cod, 
+			e.est_date, 
+			e.client_cod, 
+			c.name as clientName, 
+			e.employee_cod, 
+			e2.name as empName 
+		from estimate e
+		join client c on e.client_cod = c.cod 
+		join employee e2 on e.employee_cod = e2.cod
+	</select>
+
+	
+</mapper>

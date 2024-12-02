@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+<<<<<<< HEAD
+Built-By: edu0002
+=======
+Built-By: edu0005
+>>>>>>> origin/feature/feature-mrp
+Build-Jdk: 15.0.2
+Created-By: Maven Integration for Eclipse
+

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.productmgmt.map.ProductMgmtMapper">
+
+	<!-- (2024년 5월 12일 오후 2시 17분 박현우) -->
+
+	<!-- 완료 -->
+	<select id="tableAllList"
+		parameterType="co.second.easyrp.productmgmt.service.SearchVO"
+		resultType="co.second.easyrp.productmgmt.service.ProductMgmtVO">
+		SELECT p.cod as 'cod', p.prodname as 'prodname', p2.name as
+		'prodGroupName', w.name as 'warehouseName', p.cur_inv_qty as
+		'curInvQty', p.is_bominsert as 'isBominsert'
+		FROM product p
+		LEFT JOIN warehouse w ON p.warehouse_cod =
+		w.cod
+		LEFT JOIN productgroup p2 ON p.productgroup_cod = p2.cod
+		WHERE
+		p.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND p.cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if
+			test="searchWarehouseName != null and searchWarehouseName != ''">
+			AND w.name LIKE CONCAT('%', #{searchWarehouseName}, '%')
+		</if>
+		<if
+			test="searchProductGroupName != null and searchProductGroupName != ''">
+			AND p2.name LIKE CONCAT('%', #{searchProductGroupName}, '%')
+		</if>
+		<if test="searchEmployeeCod != null and searchEmployeeCod != ''">
+			AND p.employee_cod LIKE CONCAT('%', #{searchEmployeeCod}, '%')
+		</if>
+		ORDER BY p.cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+
+	<select id="getData"
+		resultType="co.second.easyrp.productmgmt.service.ProductMgmtVO">
+		SELECT
+		p.*,
+		p2.name as 'prodGroupName',
+		w.name as
+		'warehouseName',
+		u.name AS 'unitName',
+		um.name AS 'mgmtUnitName'
+		FROM
+		product p
+		LEFT JOIN warehouse w ON p.warehouse_cod = w.cod
+		LEFT JOIN
+		productgroup p2 ON p.productgroup_cod = p2.cod
+		LEFT JOIN unit u ON
+		p.unit_cod = u.cod
+		LEFT JOIN unit um ON p.mgmt_unit_cod = um.cod
+		WHERE
+		p.cod = #{cod}
+	</select>
+
+	<!-- 완료 -->
+	<select id="countTable"
+		parameterType="co.second.easyrp.productmgmt.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM product p
+		LEFT JOIN warehouse w ON p.warehouse_cod
+		= w.cod
+		LEFT JOIN productgroup p2 ON p.productgroup_cod = p2.cod
+		WHERE
+		p.deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND p.cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if
+			test="searchWarehouseName != null and searchWarehouseName != ''">
+			AND w.name LIKE CONCAT('%', #{searchWarehouseName}, '%')
+		</if>
+		<if
+			test="searchProductGroupName != null and searchProductGroupName != ''">
+			AND p2.name LIKE CONCAT('%', #{searchProductGroupName}, '%')
+		</if>
+		<if test="searchEmployeeCod != null and searchEmployeeCod != ''">
+			AND p.employee_cod LIKE CONCAT('%', #{searchEmployeeCod},
+			'%')
+		</if>
+	</select>
+
+	<!-- 완료 -->
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM product
+	</select>
+
+	<!-- 완료 -->
+	<insert id="insertFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductMgmtVO">
+		INSERT INTO product (
+		cod,
+		prodname,
+		unitprice,
+		basic_inv_qty,
+		basic_inv_price,
+		spec,
+		saftey_inv_qty,
+		cur_inv_qty,
+		cur_inv_price,
+		warehouse_cod,
+		productgroup_cod,
+		unit_cod,
+		unit_amount,
+		note,
+		employee_cod,
+		mgmt_unit_cod,
+		mgmt_unit_amount
+		)
+		VALUES(
+		#{cod},
+		#{prodname},
+		#{unitprice},
+		#{basicInvQty},
+		#{basicInvPrice},
+		#{spec},
+		#{safteyInvQty},
+		#{curInvQty},
+		#{curInvPrice},
+		#{warehouseCod},
+		#{productGroupCod},
+		#{unitCod},
+		#{unitAmount},
+		#{note},
+		#{employeeCod},
+		#{mgmtUnitCod},
+		#{mgmtUnitAmount}
+		)
+	</insert>
+
+	<!-- 완료 -->
+	<update id="updateFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductMgmtVO">
+		UPDATE product
+		SET
+		cod = #{cod},
+		prodname = #{prodname},
+		unitprice = #{unitprice},
+		basic_inv_qty = #{basicInvQty},
+		basic_inv_price = #{basicInvPrice},
+		spec = #{spec},
+		saftey_inv_qty = #{safteyInvQty},
+		cur_inv_qty = #{curInvQty},
+		cur_inv_price = #{curInvPrice},
+		warehouse_cod = #{warehouseCod},
+		productgroup_cod = #{productGroupCod},
+		unit_cod = #{unitCod},
+		unit_amount = #{unitAmount},
+		employee_cod = #{employeeCod},
+		mgmt_unit_cod = #{mgmtUnitCod},
+		mgmt_unit_amount = #{mgmtUnitAmount}
+		WHERE cod = #{cod}
+	</update>
+
+	<!-- 완료 -->
+	<update id="deleteFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductMgmtVO">
+		UPDATE product
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod}
+	</update>
+
+
+</mapper>

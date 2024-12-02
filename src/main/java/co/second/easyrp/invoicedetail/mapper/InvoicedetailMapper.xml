@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.invoicedetail.mapper.InvoicedetailMapper">
+
+	<!-- 발주등록페이지에 있는 청구적용 저장값불러오기에서 modal에 뿌려줄 청구리스트를 가져오기위한 메소드(승인된 청구리스트만 가져옵니다) -->	
+	<!-- 이미 청구적용된 건은 가져오지 않습니다 -->	
+	<select id="applyInvoice">
+		SELECT date_format(i.inq_date, '%Y-%m-%d') as 'inq_date',
+			   i2.invoice_cod,
+			   i2.num,
+			   i2.inventory_cod,
+			   (SELECT i.name FROM inventory i WHERE i.cod = i2.inventory_cod) as 'invname',
+   			   (SELECT i.unit_cod FROM inventory i WHERE i.cod = i2.inventory_cod) as 'inv_unit_cod',
+			   (SELECT u.name FROM unit u  WHERE u.cod = (SELECT i.unit_cod FROM inventory i WHERE i.cod = i2.inventory_cod)) as 'inv_unit_name',
+   			   (SELECT i.mgmt_unit_cod FROM inventory i WHERE i.cod = i2.inventory_cod) as 'inv_mgmt_unit_cod',
+			   (SELECT i.mgmt_unit_amount FROM inventory i WHERE i.cod = i2.inventory_cod) as 'inv_mgmt_unit_amount',
+			   (SELECT i.unit_amount FROM inventory i WHERE i.cod = i2.inventory_cod) as 'inv_unit_amount',
+			   (SELECT u.name FROM unit u  WHERE u.cod = (SELECT i.mgmt_unit_cod FROM inventory i WHERE i.cod = i2.inventory_cod)) as 'inv_mgmt_unit_name',
+			   i2.inv_qty,
+			   i2.inv_mgmt_qty,
+			   i2.unitprice,
+			   i2.supprice,
+			   i2.vax,
+			   i2.total
+		FROM invoice i
+		LEFT JOIN invoicedetail i2 ON i.cod = i2.invoice_cod AND i2.deleteyn = 'N' 
+		WHERE i.inv_class = '구매' AND
+			  i.deleteyn = 'N' AND
+		CONCAT(i2.invoice_cod, i2.num) not in(
+				SELECT CONCAT(p.invoice_cod, p.invoicedetail_num)
+				FROM purchaseorderdetail p
+				WHERE invoice_cod is not null AND invoice_cod != '' AND
+		  		p.purchaseorder_cod in(
+		  			SELECT p2.cod
+		  			FROM purchaseorder p2
+		  			WHERE p2.deleteyn = 'n')
+		  		)
+	</select>
+	
+	<insert id="insertInvoicedetail">
+		INSERT INTO invoicedetail
+		(num, invoice_cod, mrp_cod, product_cod, inventory_cod, inv_qty, inv_mgmt_qty, unitprice, supprice, vax, total)
+		VALUES (#{num}, #{invoiceCod}, #{mrpCod}, #{productCod}, #{inventoryCod}, #{invQty}, #{invMgmtQty}, #{unitprice}, #{supprice}, #{vax}, #{total})
+	</insert>
+	
+	<select id="selectInvoicedetailByInvoiceCod">
+		SELECT DISTINCT i.num, i.invoice_cod, i.mrp_cod, i2.inv_class, i.product_cod, p.prodname, i3.name AS 'invname', i.inventory_cod, i3.name AS 'invProdname', p.spec, i3.spec AS 'invSpec', m.take_date, i.inv_qty, u.name AS 'unitName', u2.name AS 'invUnitName', u3.name AS 'mgmtUnitName', u4.name AS 'invMgmtUnitName', c.name AS 'clientName', e.name AS 'employeeName', i2.inv_date, i2.inv_class, i.inv_mgmt_Qty, i2.note, i2.prod_ready 
+		FROM invoicedetail i
+		JOIN invoice i2
+		ON i.invoice_cod = i2.cod 
+		JOIN product p 
+		ON i.product_cod = p.cod 
+		LEFT JOIN inventory i3 
+		ON i.inventory_cod = i3.cod 
+		JOIN mrp m 
+		ON i.mrp_cod = m.cod
+		JOIN unit u 
+		ON p.unit_cod = u.cod
+		LEFT JOIN unit u2  
+		ON i3.unit_cod = u2.cod 
+		LEFT JOIN unit u3
+		ON p.mgmt_unit_cod = u3.cod 
+		LEFT JOIN unit u4
+		ON i3.mgmt_unit_cod = u4.cod 
+		JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		JOIN orderdetail o 
+		ON m2.order_cod = o.cod 
+		JOIN orders o2 
+		ON o.cod = o2.cod 
+		JOIN client c 
+		ON o2.client_cod = c.cod 
+		JOIN employee e 
+		ON i2.employee_cod = e.cod 
+		WHERE i.invoice_cod = #{invoiceCod}
+		ORDER BY i.num
+	</select>
+	
+	<update id="deleteInvoicedetail">
+		UPDATE invoicedetail
+		SET
+		deleteyn = 'Y'
+		WHERE invoice_cod = #{invoiceCod}
+	</update>
+	
+	<update id="updateInvoicedetail">
+		UPDATE invoicedetail
+		SET
+		inv_mgmt_qty = #{invMgmtQty}
+		WHERE invoice_cod = #{invoiceCod}
+		AND num = #{num}
+	</update>
+	
+	<update id="updateOrderdetailState">
+		UPDATE orderdetail
+		SET
+		delivery_state = #{deliveryState}
+		WHERE cod = #{cod}
+		AND num = #{num}
+	</update>
+	
+	<select id="selectOrderdetailByInvoice">
+		SELECT o.cod, o.num  
+		FROM invoicedetail i
+		JOIN mrp m 
+		ON i.mrp_cod = m.cod 
+		JOIN mps m2 
+		ON m.mps_cod = m2.cod 
+		JOIN orderdetail o 
+		ON m2.order_cod = o.cod AND m2.orderdetail_num = o.num 
+		WHERE i.invoice_cod = #{arg0} 
+		AND i.num = #{arg1}
+	</select>
+	
+	<update id="updateOrderdetailDeliveryState">
+		UPDATE orderdetail 
+		SET delivery_state = #{arg2}
+		WHERE cod = #{arg0}
+		AND num = #{arg1}
+	</update>
+</mapper>

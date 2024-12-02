@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.invoice.mapper.InvoiceMapper">
+	<select id="selectInvoiceAll">
+		SELECT i.cod, i.inv_date, i.inv_class, i.employee_cod, e.name AS 'employeeName', i.note, i.prod_ready 
+		FROM invoice i
+		JOIN employee e
+		ON i.employee_cod = e.cod
+		WHERE i.deleteyn = 'N'
+		AND i.closing = 'N'
+		<if test="searchPlan != null and searchPlan != ''">
+			AND m.plan = #{searchPlan}
+		</if>
+		<if test="searchProdCod != null and searchProdCod != ''">
+			AND m.product_cod = #{searchProdCod}
+		</if>
+		<if test="searchProdName != null and searchProdName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchProdName}, '%')
+		</if>
+		<if test="searchClient != null and searchClient != ''">
+			AND c.name LIKE CONCAT('%', #{searchClient}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND m.plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+		ORDER BY i.cod desc
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="countInvoiceTables">
+		SELECT COUNT(*)
+		FROM invoice i
+		JOIN employee e
+		ON i.employee_cod = e.cod
+		WHERE i.deleteyn = 'N'
+		AND i.closing = 'N'
+		<if test="searchPlan != null and searchPlan != ''">
+			AND m.plan = #{searchPlan}
+		</if>
+		<if test="searchProdCod != null and searchProdCod != ''">
+			AND m.product_cod = #{searchProdCod}
+		</if>
+		<if test="searchProdName != null and searchProdName != ''">
+			AND p.prodname LIKE CONCAT('%', #{searchProdName}, '%')
+		</if>
+		<if test="searchClient != null and searchClient != ''">
+			AND c.name LIKE CONCAT('%', #{searchClient}, '%')
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND m.plan_date BETWEEN #{preSearchDate} AND
+			#{postSearchDate}
+		</if>
+	</select>
+	
+	<select id="selectInvoice">
+		SELECT i.cod, i.inv_date, i.inv_class, i.employee_cod, e.name AS 'employeeName', i.note
+		FROM invoice i
+		JOIN employee e
+		ON i.employee_cod = e.cod
+		WHERE i.cod = #{cod}
+	</select>
+	
+	<insert id="insertInvoice">
+		INSERT INTO easyrp.invoice
+		(cod, inv_date, inv_class, employee_cod, note, prod_ready)
+		VALUES(#{cod}, #{invDate}, #{invClass}, #{employeeCod}, #{note}, #{prodReady});
+	</insert>
+	
+	<update id="updateInvoice">
+		UPDATE invoice
+		SET prod_ready = #{prodReady}
+		WHERE cod = #{cod}
+	</update>
+	
+	<update id="deleteInvoice">
+		UPDATE invoice
+		SET
+		deleteyn = 'Y'
+		WHERE cod = #{cod}
+	</update>
+	
+	<update id="mrpClosingUpdateToY">
+		UPDATE mrp
+		SET
+		closing = 'Y'
+		WHERE cod = #{mrpCod}
+	</update>
+	
+	<update id="mrpClosingUpdateToN">
+		UPDATE mrp
+		SET
+		closing = 'N'
+		WHERE cod = #{mrpCod}
+	</update>
+	
+	<select id="selectMaxCod">
+		SELECT COALESCE(MAX(CAST(RIGHT (cod,3) AS SIGNED)), 0) AS cod FROM invoice
+	</select>
+	
+	<update id="updateInvoiceClosing">
+		UPDATE invoice
+		SET
+		closing = 'Y'
+		WHERE cod = #{cod}
+	</update>
+	
+	<!-- 입고여부. 생산가능여부. 마감여부를 업데이트하는 쿼리 -->
+	<!-- 하서현 -->
+	<update id="updateIboundynOrProdReady">
+		UPDATE invoice i
+		<trim prefix="SET" suffixOverrides=",">
+			iboundyn = IF(i.cod in(SELECT allIboundedInvoiceList.invoice_cod FROM (<include refid="allIboundedInvoiceList"/>) allIboundedInvoiceList),'Y','N'),
+			prod_ready = IF(i.cod in(SELECT allIboundedInvoiceList.invoice_cod FROM (<include refid="allIboundedInvoiceList"/>) allIboundedInvoiceList),'Y','N'),
+			closing = IF(i.cod in(SELECT allIboundedInvoiceList.invoice_cod FROM (<include refid="allIboundedInvoiceList"/>) allIboundedInvoiceList),'Y','N'),
+		</trim>
+	</update>
+	
+	<!-- 완벽하게 입고된 청구건만 가져오는 쿼리 -->
+	<!-- 하서현 -->
+	<sql id="allIboundedInvoiceList">
+		SELECT p2.invoice_cod, COUNT(p2.invoice_cod) as 'iboundedCount' , needIboundCount 
+		FROM purchaseorder p 
+		LEFT JOIN purchaseorderdetail p2
+		  ON p2.purchaseorder_cod = p.cod
+		LEFT JOIN (
+			SELECT i.cod,COUNT(i2.num) as 'needIboundCount'
+				FROM invoice i 
+				LEFT JOIN invoicedetail i2 
+					ON i2.invoice_cod = i.cod AND i2.deleteyn = 'N'
+				WHERE i.deleteyn = 'N'
+				GROUP BY i.cod
+		) needIboundTable
+			ON needIboundTable.cod = p2.invoice_cod
+		WHERE p.ibound_date IS NOT NULL
+		AND p2.invoice_cod IS NOT NULL
+		AND p.deleteyn = 'N'
+		GROUP BY p2.invoice_cod
+		HAVING needIboundTable.needIboundCount = COUNT(p2.invoice_cod)
+	</sql>
+	<update id="allIboundedInvoiceList">
+		<include refid="allIboundedInvoiceList"/>
+	</update>
+</mapper>

@@ -1,0 +1,29 @@
+@charset "UTF-8";
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.selector-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.selector-container2 {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.chosen-select {
+	text-align: right;
+	margin-right: 10px;
+	margin-left: 10px;
+}
+
+.selectors select{
+    margin-left: 5px;
+    margin-right: 5px;
+}

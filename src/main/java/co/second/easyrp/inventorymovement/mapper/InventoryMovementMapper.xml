@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.inventorymovement.mapper.InventoryMovementMapper">
+
+	<select id="inventoryMovementList">
+		SELECT *
+		FROM inventorymovement
+		WHERE deleteyn = 'N'
+		<if test="cod != null and cod != ''">
+			AND cod = #{cod}
+		</if>
+		<if test="oboundWarehouse != null and oboundWarehouse != ''">
+			AND obound_warehouse LIKE CONCAT('%', #{oboundWarehouse}, '%')
+		</if>
+		<if test="oboundLocation != null and oboundLocation != ''">
+			AND obound_location LIKE CONCAT('%', #{oboundLocation}, '%')
+		</if>
+		<if test="iboundWarehouse != null and iboundWarehouse != ''">
+			AND ibound_warehouse LIKE CONCAT('%', #{iboundWarehouse}, '%')
+		</if>
+		<if test="iboundLocation != null and iboundLocation != ''">
+			AND ibound_location LIKE CONCAT('%', #{iboundLocation}, '%')
+		</if>
+		<if test="employeeCod != null and employeeCod != ''">
+			AND employee_cod = #{employeeCod}		
+		</if>
+		<if test="purchaseDetailCod != null and purchaseDetailCod != ''">
+			AND purchasedetail_cod = #{purchaseDetailCod}
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND move_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="selectInventoryMovementDateScope">
+	SELECT
+		cod,
+		move_date,
+		obound_warehouse,
+		obound_location,
+		ibound_warehouse,
+		ibound_location,
+		employee_cod,
+		product_cod,
+		product_name,
+		spec,
+		unit
+	FROM inventorymovement
+	WHERE move_date Between #{startDate} and #{endDate}
+	</select>
+	
+	<insert id="insertInventoryMovement">
+	INSERT INTO inventorymovement
+	VALUES(
+		#{moveDate}, 
+		#{oboundWarehouse}, 
+		#{oboundLocation},
+		#{iboundWarehouse}, 
+		#{iboundLocation},
+		#{employee_cod},
+		#{product_cod},
+		#{product_name},
+		#{spec},
+		#{unit})
+	</insert>
+	<select id="getAllPurchaseOrderDatas">
+		SELECT pod.*, po
+		
+		.employee_cod_ibound
+		 FROM purchaseorderdetail pod
+		 LEFT JOIN purchaseorder po
+		 ON pod.purchaseorder_cod=po.cod
+		WHERE state_cod = 203
+	</select>
+	
+	<update id="updateInventoryMovement"></update>
+	<delete id="deleteInventoryMovement"></delete>
+	<select id="getAllKeyValues"></select>
+	<select id="countInventoryMovementLists" resultType="int">
+		SELECT COUNT(*)
+		FROM inventorymovement
+		WHERE DELETEYN = 'N'
+		<if test="cod != null and cod != ''">
+			AND cod = #{cod}
+		</if>
+		<if test="oboundWarehouse != null and oboundWarehouse != ''">
+			AND obound_warehouse LIKE CONCAT('%', #{oboundWarehouse}, '%')
+		</if>
+		<if test="oboundLocation != null and oboundLocation != ''">
+			AND obound_location LIKE CONCAT('%', #{oboundLocation}, '%')
+		</if>
+		<if test="iboundWarehouse != null and iboundWarehouse != ''">
+			AND ibound_warehouse LIKE CONCAT('%', #{iboundWarehouse}, '%')
+		</if>
+		<if test="iboundLocation != null and iboundLocation != ''">
+			AND ibound_location LIKE CONCAT('%', #{iboundLocation}, '%')
+		</if>
+		<if test="employeeCod != null and employeeCod != ''">
+			AND employee_cod = #{employeeCod}		
+		</if>
+		<if test="purchaseDetailCod != null and purchaseDetailCod != ''">
+			AND purchasedetail_cod = #{purchaseDetailCod}
+		</if>
+		<if test="preSearchDate != null and postSearchDate != null">
+			AND move_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+	</select>
+</mapper>

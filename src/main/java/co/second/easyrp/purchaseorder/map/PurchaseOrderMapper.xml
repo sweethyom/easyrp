@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.purchaseorder.map.PurchaseOrderMapper">
+	
+	<!-- 특정 발주데이터를 가져오기위한 쿼리 -->
+	<!-- 하서현 -->
+	<select id="selectPo">
+		<include refid="poMgmtList"/>
+		WHERE p.cod = #{key}
+	</select>
+	
+	<!-- 검색조건 -->
+	<!-- 하서현 -->
+	<sql id="searchCondition">
+		<if test="searchCod != null and searchCod != ''">
+				AND cod = #{searchCod}
+			</if>
+			<if test="searchFromPoDate != null and searchFromPoDate != ''">
+				AND po_date <![CDATA[>=]]> #{searchFromPoDate}
+			</if>
+			<if test="searchToPoDate != null and searchToPoDate != ''">
+				AND	po_date <![CDATA[<=]]> #{searchToPoDate}
+			</if>
+			<if test="searchStateCod != null and searchStateCod != ''">
+				AND state_cod = #{searchStateCod}
+			</if>
+			<if test="searchClientName != null and searchClientName != ''">
+				AND clientName LIKE CONCAT('%', #{searchClientName}, '%')
+			</if>
+			<if test="searchClientCod != null and searchClientCod != ''">
+				AND client_cod LIKE CONCAT('%', #{searchClientCod}, '%')
+			</if>
+			<if test="searchEmpCodIbound != null and searchEmpCodIbound != ''">
+				AND employee_cod_ibound LIKE CONCAT('%', #{searchEmpCodIbound}, '%')
+			</if>
+			<if test="searchEmpNameIbound != null and searchEmpNameIbound != ''">
+				AND empNameIbound LIKE CONCAT('%', #{searchEmpNameIbound}, '%')
+			</if>
+			<if test="searchEmpNamePo != null and searchEmpNamePo != ''">
+				AND empNamePo LIKE CONCAT('%', #{searchEmpNamePo}, '%')
+			</if>
+			<if test="searchEmpCodPo != null and searchEmpCodPo != ''">
+				AND employee_cod_po LIKE CONCAT('%', #{searchEmpCodPo}, '%')
+			</if>
+			<if test="searchFromIboundDate != null and searchFromIboundDate != ''">
+				AND ibound_date <![CDATA[>=]]> #{searchFromIboundDate}
+			</if>
+			<if test="searchToIboundDate != null and searchToIboundDate != ''">
+				AND ibound_date <![CDATA[<=]]> #{searchToIboundDate}
+			</if>
+			<if test="searchFromClosingDate != null and searchFromClosingDate != ''">
+				AND closing_date <![CDATA[>=]]> #{searchFromClosingDate}
+			</if>
+			<if test="searchToClosingDate != null and searchToClosingDate != ''">
+				AND closing_date <![CDATA[<=]]> #{searchToClosingDate}
+			</if>
+			<if test="searchFromDday != null and searchFromDday != ''">
+				AND dday <![CDATA[>=]]> #{searchFromDday}
+			</if>
+			<if test="searchToDday != null and searchToDday != ''">
+				AND dday <![CDATA[<=]]> #{searchToDday}
+			</if>
+	</sql>
+	
+	<!-- 순수 발주리스트를 가져오기위한 쿼리(발주관리) -->
+	<!-- 2024년 5월 9일 오전 11시 28분 -->
+	<select id="poMgmtList">
+		<include refid="poMgmtList"/>
+	</select>
+	<sql id="poMgmtList">
+		SELECT  p.cod,
+			date_format(p.po_date, '%Y-%m-%d') as 'po_date',
+			p.state_cod,
+			(SELECT s.name FROM state s WHERE s.cod = p.state_cod) as 'stateName',
+			date_format(p.ibound_date, '%Y-%m-%d') as 'ibound_date',
+			date_format(p.closing_date, '%Y-%m-%d') as 'closing_date',
+			date_format(p.dday, '%Y-%m-%d') as 'dday',
+			p.client_cod,
+			(SELECT c.name FROM client c WHERE p.client_cod = c.cod) as 'clientName',
+			p.taxdivision_cod,
+			(SELECT t.name FROM taxdivision t  WHERE p.taxdivision_cod = t.cod) as 'taxDivName',
+			p.employee_cod_writer,
+			(SELECT e.name FROM employee e  WHERE p.employee_cod_writer = e.cod) as 'empNameWriter',
+			p.employee_cod_po,
+			(SELECT e.name FROM employee e  WHERE p.employee_cod_po = e.cod) as 'empNamePo',
+			p.employee_cod_ibound,
+			(SELECT e.name FROM employee e  WHERE p.employee_cod_ibound = e.cod) as 'empNameIbound',
+			p.printcnt,
+			p.note,
+			p.deleteyn,
+			p.is_specification
+		FROM purchaseorder p 
+	</sql>
+	
+	
+	<!-- 페이징 및 검색조건이 적용된 발주리스트를 가져오기위한 쿼리(발주관리) -->
+	<!-- 2024년 5월 9일 오전 11시 28분 -->
+	<select id="poMgmtListPaged">
+	SELECT *
+		FROM (
+		<include refid="poMgmtList" />
+		) as p
+		WHERE deleteyn = 'N'
+			<include refid="searchCondition"/>
+		ORDER BY cod DESC
+		LIMIT #{size} OFFSET #{offset}
+	</select>
+	
+	
+	<!-- 검색조건이 적용된 발주리스트의 갯수를 가져오기위한 쿼리(발주관리) -->
+	<!-- 2024년 5월 9일 오전 11시 28분 -->
+	<select id="countPoMgmtList">
+	SELECT COUNT(*)
+		FROM (
+		<include refid="poMgmtList" />
+		) as p
+		WHERE p.deleteyn = 'N'
+			<include refid="searchCondition"/>
+	</select>
+	
+	<!-- 과세구분리스트를 가져오기위한 쿼리 -->
+	<!-- 하서현 -->
+	<select id="taxDivList">
+		SELECT *
+		FROM taxdivision
+	</select>
+	
+	<!-- 발주등록을할때 고유한 발주번호를 부여해주기위한 쿼리 -->
+	<!-- 하서현 -->
+	<sql id="newPoCod">
+		SELECT (CASE
+		WHEN cod IS NULL
+		THEN 'po001'
+		ELSE CONCAT(
+		'po',
+		LPAD(
+		(MAX(
+		CAST(
+		SUBSTRING(cod,4)
+		AS
+		UNSIGNED
+		)
+		)+1
+		),
+		3,0))
+		END) as cod
+		FROM purchaseorder
+	</sql>
+	<select id="newPoCod">
+		<include refid="newPoCod"/>
+	</select>
+	
+	<!-- 발주테이블에 발주등록을하는 쿼리 -->
+	<!-- 하서현 -->
+	<insert id="insertPo">
+		INSERT INTO purchaseorder(
+			cod,
+			po_date,
+			client_cod,
+			employee_cod_writer,
+			employee_cod_po,
+			employee_cod_ibound
+		<if test="dday != null and dday != ''">
+			,dday
+		</if>
+		<if test="note != null and note != ''">
+			,note
+		</if>
+		) VALUES(
+			#{cod},
+			#{poDate},
+			#{clientCod},
+			#{employeeCodWriter},
+			#{employeeCodPo},
+			#{employeeCodIbound}
+		<if test="dday != null and dday != ''">
+			,#{dday}
+		</if>
+		<if test="note != null and note != ''">
+			,#{note}
+		</if>
+		)
+	</insert>
+	
+	<select id="selectPurchaseOrdersClosing">
+		SELECT *
+		FROM (
+		<include refid="poMgmtList" />
+		) as p
+		WHERE deleteyn = 'N'
+		AND state_cod = 204
+			<include refid="searchCondition"/>
+		ORDER BY cod DESC
+		LIMIT #{size} OFFSET #{offset}
+	</select>
+	
+	<!-- 발주테이블의 정보를 수정하는 쿼리 -->
+	<!-- 하서현 -->
+	<update id="updatePo">
+		UPDATE purchaseorder
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="poDate != null and poDate != ''">
+				po_date = #{poDate},
+			</if>
+			<if test="closingDate != null and closingDate != ''">
+				closing_date = #{closingDate},
+			</if>
+			<if test="clientCod != null and clientCod != ''">
+				client_cod = #{clientCod},
+			</if>
+			<if test="taxdivisionCod != null and taxdivisionCod != ''">
+				taxdivision_cod = #{taxdivisionCod},
+			</if>
+			<if test="employeeCodWriter != null and employeeCodWriter != ''">
+				employee_cod_writer = #{employeeCodWriter},
+			</if>
+			<if test="employeeCodPo != null and employeeCodPo != ''">
+				employee_cod_po = #{employeeCodPo},
+			</if>
+			<if test="employeeCodIbound != null and employeeCodIbound != ''">
+				employee_cod_ibound = #{employeeCodIbound},
+			</if>
+			<if test="note != null and note != ''">
+				note = #{note},
+			</if>
+			<if test="deleteyn != null and deleteyn != ''">
+				deleteyn = #{deleteyn},
+			</if>
+			<if test="iboundDate != null and iboundDate != ''">
+				ibound_date = #{iboundDate},
+			</if>
+			<if test="stateCod != null and stateCod != ''">
+				state_cod = #{stateCod},
+			</if>
+			<if test="dday != null and dday != ''">
+				dday = #{dday},
+			</if>
+		</trim>
+		WHERE cod = #{cod}
+	</update>
+	
+	<!-- 입고일자.마감일자.납기일.비고를 update하는 메소드 -->
+	<!-- 하서현 -->
+	<update id="updateIboundDateClosingDateDdayNote">
+		UPDATE purchaseorder
+			<trim prefix="SET" suffixOverrides=",">
+				<if test="note == null or note == ''">note = null,</if>
+				<if test="iboundDate == null or iboundDate == ''">ibound_date = null,</if>
+				<if test="dday == null or dday == ''">dday = null,</if>
+				<if test="closingDate == null or closingDate == ''">closing_date = null,</if>
+			</trim>
+		WHERE cod = #{cod}
+	</update>	
+	
+</mapper>

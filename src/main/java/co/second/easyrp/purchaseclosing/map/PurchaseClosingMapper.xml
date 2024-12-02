@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="co.second.easyrp.purchaseclosing.map.PurchaseClosingMapper">
+	
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 START -->
+	<select id="tableAllList"
+		parameterType="co.second.easyrp.purchaseclosing.service.SearchVO"
+		resultType="co.second.easyrp.purchaseclosing.service.PurchaseClosingVO">
+		SELECT p.cod AS 'purchaseCod', SUM(pd.total) AS 'total', state_cod, closing_date 
+		FROM purchaseorder p
+		JOIN purchaseorderdetail pd 
+		ON p.cod = pd.purchaseorder_cod
+		WHERE p.deleteyn = 'N'
+		<if test="searchPurchaseCod != null and searchPurchaseCod != ''">
+			AND p.cod = #{searchPurchaseCod}
+		</if>
+		<if
+			test="searchPurchaseClosingState == null or searchPurchaseClosingState == ''">
+			AND p.state_cod IN (203, 204)
+		</if>
+		<if
+			test="searchPurchaseClosingState != null and searchPurchaseClosingState != ''">
+			AND p.state_cod = #{searchPurchaseClosingState}
+		</if>
+		<if
+			test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+			AND p.closing_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+		</if>
+		GROUP BY p.cod 
+		ORDER BY p.cod 
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	<!-- 테이블의 메인에 값을 깔기 위한 쿼리 END -->
+
+	<!-- 페이지네이션 페이지 생성을 위해 데이터의 수를 카운트 하기 위한 쿼리 START -->
+	<select id="countTable"
+		parameterType="co.second.easyrp.purchaseclosing.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(a.purchaseCod) 
+		FROM (
+			SELECT p.cod AS 'purchaseCod', SUM(pd.total) AS 'total', p.state_cod, p.closing_date 
+			FROM purchaseorder p
+			JOIN purchaseorderdetail pd 
+			ON p.cod = pd.purchaseorder_cod
+			WHERE p.deleteyn = 'N'
+			<if test="searchPurchaseCod != null and searchPurchaseCod != ''">
+				AND p.cod = #{searchPurchaseCod}
+			</if>
+			<if
+				test="searchPurchaseClosingState == null and searchPurchaseClosingState == ''">
+				AND p.state_cod IN (203, 204)
+			</if>
+			<if
+				test="searchPurchaseClosingState != null and searchPurchaseClosingState != ''">
+				AND p.state_cod = #{searchPurchaseClosingState}
+			</if>
+			<if
+				test="preSearchDate != null and preSearchDate != '' and postSearchDate != null and postSearchDate != ''">
+				AND p.closing_date BETWEEN #{preSearchDate} AND #{postSearchDate}
+			</if>
+			GROUP BY p.cod 
+			ORDER BY p.cod 
+			) a 
+	</select>
+	<!-- 페이지네이션 페이지 생성을 위해 데이터의 수를 카운트 하기 위한 쿼리 END -->
+
+	<!-- 매출마감 기능을 구현하기 위한 Update 쿼리 START -->
+	<update id="purchaseClosingUpdate"
+		parameterType="co.second.easyrp.purchaseclosing.service.PurchaseClosingVO">
+		UPDATE purchaseorder 
+		SET
+		state_cod = 204,
+		closing_date = CURDATE() 
+		WHERE cod = #{purchaseCod}
+	</update>
+	<!-- 매출마감 기능을 구현하기 위한 Update 쿼리 END -->
+</mapper>

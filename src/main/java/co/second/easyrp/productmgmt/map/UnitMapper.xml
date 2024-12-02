@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.productmgmt.map.UnitMapper">
+
+	<!-- (2024년 5월 8일 오후 2시 37분 박현우) -->
+
+	<!-- Unit 데이터베이스 테이블에 삭제되지 않은 값을 가져오기 위한 쿼리 -->
+	<select id="unitTableAllList"
+		resultType="co.second.easyrp.productmgmt.service.UnitVO">
+		SELECT cod, name, deleteyn
+		FROM unit
+		ORDER BY cod DESC
+	</select>
+
+	<!-- Unit 데이터베이스 테이블에 값을 삽입하기 위한 쿼리 -->
+	<insert id="unitInsertFn"
+		parameterType="co.second.easyrp.productmgmt.service.UnitVO">
+		INSERT INTO unit (
+		cod,
+		name)
+		VALUES(
+		#{cod},
+		#{name}
+		);
+	</insert>
+
+	<update id="unitUpdateFn"
+		parameterType="co.second.easyrp.productmgmt.service.UnitVO">
+		UPDATE unit
+		SET
+		name = #{name}
+		WHERE cod = #{cod};
+	</update>
+
+	<update id="unitDeleteFn"
+		parameterType="co.second.easyrp.productmgmt.service.UnitVO">
+		UPDATE unit
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod};
+	</update>
+
+
+</mapper>

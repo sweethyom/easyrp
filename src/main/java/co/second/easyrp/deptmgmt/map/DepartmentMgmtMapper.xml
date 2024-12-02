@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.deptmgmt.map.DepartmentMgmtMapper">
+	
+	<select id="departmentTableAllList" parameterType="co.second.easyrp.deptmgmt.service.SearchVO" resultType="co.second.easyrp.deptmgmt.service.DepartmentMgmtVO">
+		SELECT cod, name, wrkname, location
+		FROM department
+		WHERE deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchWrkName != null and searchWrkName != ''">
+			AND wrkname LIKE CONCAT('%', #{searchWrkName}, '%')
+		</if>
+		<if test="searchLocation != null and searchLocation != ''">
+			AND location LIKE CONCAT('%', #{searchLocation}, '%')
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+	
+	<select id="getDeptData" parameterType="co.second.easyrp.deptmgmt.service.DepartmentMgmtVO">
+		SELECT cod, name, wrkname, location
+		FROM department
+		WHERE cod = #{cod};
+	</select>
+	
+	<select id="countDepartmentTable" parameterType="co.second.easyrp.deptmgmt.service.SearchVO" resultType="int">
+		SELECT COUNT(*)
+		FROM department
+		WHERE DELETEYN = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchWrkName != null and searchWrkName != ''">
+			AND wrkname LIKE CONCAT('%', #{searchWrkName}, '%')
+		</if>
+		<if test="searchLocation != null and searchLocation != ''">
+			AND location LIKE CONCAT('%', #{searchLocation}, '%')
+		</if>
+	</select>
+	
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM department
+	</select>
+	
+	<select id="getAllWorkplaceValues" resultType="co.second.easyrp.deptmgmt.service.WorkplaceVO">
+	  SELECT code, name, location
+	  FROM workplace
+	  where deleteyn = 'N'
+	</select>
+	
+	<insert id="deptmgmtInsertFn" parameterType="co.second.easyrp.deptmgmt.service.DepartmentMgmtVO">
+		INSERT INTO department (
+		cod,
+		name,
+		wrkname,
+		location)
+		VALUES(
+		#{cod},
+		#{name},
+		#{wrkname},
+		#{location}
+		);
+	</insert>
+	
+	<update id="deptmgmtUpdateFn" parameterType="co.second.easyrp.deptmgmt.service.DepartmentMgmtVO">
+		UPDATE department
+		SET
+		name = #{name},
+		wrkname = #{wrkname},
+		location = #{location}
+		WHERE cod = #{cod};
+	</update>
+	
+	<update id="deptmgmtDeleteFn">
+		UPDATE department
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod};
+	</update>
+	
+	<!-- 페이징과 검색조건이 적용되지않은 순수 부서리스트만 가져오는 쿼리 -->
+	<!-- 2024년 5월 7일 오후 1시 13분 하서현 -->
+	<select id="deptAllList">
+		SELECT 
+			cod,
+			name,
+			wrkname,
+			location
+		FROM department
+		WHERE
+			deleteyn = 'N'
+	</select>
+	
+	
+</mapper>

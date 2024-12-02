@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.client.map.ClientMapper">
+
+	<!-- (2024년 5월 7일 오전 12시 04분 박현우) -->
+
+	<select id="clientTableAllList"
+		parameterType="co.second.easyrp.client.service.SearchVO"
+		resultType="co.second.easyrp.client.service.ClientVO">
+		SELECT cod, name, representative, manager_tel
+		FROM client
+		WHERE deleteyn = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchAddress != null and searchAddress != ''">
+			AND address LIKE CONCAT('%', #{searchAddress}, '%')
+		</if>
+		<if
+			test="searchRepresentative != null and searchRepresentative != ''">
+			AND representative LIKE CONCAT('%', #{searchRepresentative}, '%')
+		</if>
+		<if test="searchManagerName != null and searchManagerName != ''">
+			AND manager_name LIKE CONCAT('%', #{searchManagerName}, '%')
+		</if>
+		ORDER BY cod DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+	<select id="getClientData"
+		resultType="co.second.easyrp.client.service.ClientVO">
+		SELECT * FROM client WHERE cod = #{cod}
+	</select>
+
+	<select id="countClientTable"
+		parameterType="co.second.easyrp.client.service.SearchVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM client
+		WHERE DELETEYN = 'N'
+		<if test="searchCod != null and searchCod != ''">
+			AND cod = #{searchCod}
+		</if>
+		<if test="searchName != null and searchName != ''">
+			AND name LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		<if test="searchAddress != null and searchAddress != ''">
+			AND address LIKE CONCAT('%', #{searchAddress}, '%')
+		</if>
+		<if
+			test="searchRepresentative != null and searchRepresentative != ''">
+			AND representative LIKE CONCAT('%', #{searchRepresentative}, '%')
+		</if>
+		<if test="searchManagerName != null and searchManagerName != ''">
+			AND manager_name LIKE CONCAT('%', #{searchManagerName}, '%')
+		</if>
+	</select>
+
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM
+		client
+	</select>
+
+	<insert id="clientInsertFn"
+		parameterType="co.second.easyrp.client.service.ClientVO">
+		INSERT INTO client (
+		cod,
+		name,
+		representative,
+		faxnum,
+		address,
+		postcode,
+		manager_name,
+		manager_tel)
+		VALUES(
+		#{cod},
+		#{name},
+		#{representative},
+		#{faxnum},
+		#{address},
+		#{postcode},
+		#{managerName},
+		#{managerTel}
+		)
+	</insert>
+
+	<update id="clientUpdateFn"
+		parameterType="co.second.easyrp.client.service.ClientVO">
+		UPDATE client
+		SET
+		name = #{name},
+		representative = #{representative},
+		faxnum = #{faxnum},
+		address = #{address},
+		postcode = #{postcode},
+		manager_name = #{managerName},
+		manager_tel = #{managerTel}
+		WHERE cod = #{cod}
+	</update>
+
+	<update id="clientDeleteFn"
+		parameterType="co.second.easyrp.client.service.ClientVO">
+		UPDATE client
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod};
+	</update>
+	
+	<select id="getDiscountData" resultType="co.second.easyrp.client.service.discountVO">
+	  SELECT num, class as 'className', discrate
+	  FROM discount
+	  where deleteyn = 'N';
+	</select>
+
+	<select id="clientAllList">
+		SELECT * FROM client 
+		WHERE deleteyn = 'N'
+	</select>
+
+</mapper>

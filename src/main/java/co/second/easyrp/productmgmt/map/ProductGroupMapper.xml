@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.second.easyrp.productmgmt.map.ProductGroupMapper">
+
+	<!-- (2024년 5월 9일 오후 11시 13분 박현우) -->
+
+	<!-- 데이터베이스 테이블에 삭제되지 않은 값을 가져오기 위한 쿼리 -->
+	<select id="tableAllList"
+		resultType="co.second.easyrp.productmgmt.service.ProductGroupVO">
+		SELECT cod, name, deleteyn
+		FROM productgroup
+		ORDER BY cod DESC
+	</select>
+
+	<!-- DB에서 cod 컬럼의 최대값을 가져오기위한 쿼리 -->
+	<select id="getMaxCode" resultType="String">
+		SELECT max(cod) as 'cod'
+		FROM
+		productgroup
+	</select>
+
+	<!-- 데이터베이스 테이블에 값을 삽입하기 위한 쿼리 -->
+	<insert id="insertFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductGroupVO">
+		INSERT INTO productgroup (
+		cod,
+		name)
+		VALUES(
+		#{cod},
+		#{name}
+		);
+	</insert>
+
+	<update id="updateFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductGroupVO">
+		UPDATE productgroup
+		SET
+		name = #{name}
+		WHERE cod = #{cod}
+	</update>
+
+	<update id="deleteFn"
+		parameterType="co.second.easyrp.productmgmt.service.ProductGroupVO">
+		UPDATE productgroup
+		SET
+		DELETEYN = 'Y'
+		WHERE cod = #{cod}
+	</update>
+
+
+</mapper>
